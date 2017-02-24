@@ -11,7 +11,7 @@ import numpy as np
 class CartPoleEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
-        'video.frames_per_second' : 20
+        'video.frames_per_second' : 50
     }
 
     def __init__(self):
@@ -22,13 +22,13 @@ class CartPoleEnv(gym.Env):
         self.length = 0.5 # actually half the pole's length
         self.polemass_length = (self.masspole * self.length)
         self.force_mag = 10.0
-        self.tau = 0.02  # seconds between state updates
+        self.dt = 0.02  # seconds between state updates
 
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * np.pi / 360
         self.x_threshold = 2.4
         self.x_dot_max = 4.0
-        self.theta_dot_max = 10.0
+        self.theta_dot_max = 3.0 * np.pi
 
         high = np.array([
             self.x_threshold,
@@ -55,11 +55,11 @@ class CartPoleEnv(gym.Env):
         temp = (force + self.polemass_length * theta_dot * theta_dot * sintheta) / self.total_mass
         thetaacc = (self.gravity * sintheta - costheta * temp) / (self.length * (4.0/3.0 - self.masspole * costheta * costheta / self.total_mass))
         xacc  = temp - self.polemass_length * thetaacc * costheta / self.total_mass
-        x  += self.tau * x_dot
-        x_dot += self.tau * xacc
+        x  += self.dt * x_dot
+        x_dot += self.dt * xacc
         x_dot = np.clip(x_dot, -self.x_dot_max, self.x_dot_max)
-        theta += self.tau * theta_dot
-        theta_dot += self.tau * thetaacc
+        theta += self.dt * theta_dot
+        theta_dot += self.dt * thetaacc
         theta = angle_normalize(theta)
         theta_dot = np.clip(theta_dot, -self.theta_dot_max, self.theta_dot_max)
         self.state = (x,x_dot,theta,theta_dot)
@@ -71,10 +71,10 @@ class CartPoleEnv(gym.Env):
         # reward design
         reward = 0.0
         if len(action) == 4:
-            reward = - action[1] * np.absolute(force) / self.force_mag
+            reward = - action[1] * ( np.absolute(force) / self.force_mag - 0.5 ) * 2.0
             reward += action[2] * np.cos(theta)
-            reward += action[3] * np.absolute(theta_dot) / self.theta_dot_max
-            reward = -1.0 if done else reward   #compulsion
+            reward += action[3] * ( np.absolute(theta_dot) / self.theta_dot_max - 0.5 ) * 2.0
+            reward = -100.0 if done else reward   #compulsion
         else:
             reward = 1.0 if np.absolute(x) < self.x_threshold and np.absolute(theta) < self.theta_threshold_radians else 0.0
 
