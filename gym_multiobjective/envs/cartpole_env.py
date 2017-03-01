@@ -27,8 +27,8 @@ class CartPoleEnv(gym.Env):
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * np.pi / 360
         self.x_threshold = 2.4
-        self.x_dot_max = 4.0
-        self.theta_dot_max = 3.0 * np.pi
+        self.x_dot_max = 4.8
+        self.theta_dot_max = 4.0 * np.pi
 
         high = np.array([
             self.x_threshold,
@@ -71,10 +71,10 @@ class CartPoleEnv(gym.Env):
         # reward design
         reward = 0.0
         if len(action) == 4:
-            reward = - action[1] * ( np.absolute(force) / self.force_mag - 0.5 ) * 2.0
+            reward -= action[1] * ( ( np.absolute(force) / self.force_mag - 0.5 ) + ( np.absolute(x) / self.x_threshold - 0.5 ) )
             reward += action[2] * np.cos(theta)
             reward += action[3] * ( np.absolute(theta_dot) / self.theta_dot_max - 0.5 ) * 2.0
-            reward = -100.0 if done else reward   #compulsion
+            reward = -1.0 if done else reward
         else:
             reward = 1.0 if np.absolute(x) < self.x_threshold and np.absolute(theta) < self.theta_threshold_radians else 0.0
 
