@@ -27,7 +27,7 @@ class CartPoleEnv(gym.Env):
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * np.pi / 360
         self.x_threshold = 2.4
-        self.x_dot_max = 4.8
+        self.x_dot_max = 1.0 * self.x_threshold
         self.theta_dot_max = 4.0 * np.pi
 
         high = np.array([
