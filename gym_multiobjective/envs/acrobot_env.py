@@ -33,7 +33,7 @@ class AcrobotEnv(gym.Env):
         self.LMAX = self.LINK_LENGTH_1 + self.LINK_LENGTH_2 + 0.05  # for display
         # Limitation
         self.MAX_VEL_1 = 4.0 * np.pi
-        self.MAX_VEL_2 = 9.0 * np.pi
+        self.MAX_VEL_2 = 4.0 * np.pi
         self.MAX_TORQUE = 4.5
         self.MAX_ANG_2 = np.pi
 
