@@ -19,7 +19,7 @@ class AcrobotEnv(gym.Env):
     def __init__(self):
         # Constants
         self.GRAVITY = 9.8
-        self.DT = 0.01
+        self.DT = 0.02
         # Physical params
         self.LINK_LENGTH_1 = 0.2  # [m]
         self.LINK_LENGTH_2 = 0.2  # [m]
