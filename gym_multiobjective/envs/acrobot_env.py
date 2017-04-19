@@ -34,11 +34,12 @@ class AcrobotEnv(gym.Env):
         # Limitation
         self.MAX_VEL_1 = 4.0 * np.pi
         self.MAX_VEL_2 = 4.0 * np.pi
-        self.MAX_TORQUE = 4.5
+        self.MAX_TORQUE = 4.0
         self.MAX_ANG_2 = np.pi
 
         # Create spaces
-        high = np.array([1.0, 1.0, 1.0, 1.0, self.MAX_VEL_1, self.MAX_VEL_2])
+        # high = np.array([1.0, 1.0, 1.0, 1.0, self.MAX_VEL_1, self.MAX_VEL_2])
+        high = np.array([1.0, 1.0, self.MAX_ANG_2, self.MAX_VEL_1, self.MAX_VEL_2])
         self.action_space = spaces.Box(low=-self.MAX_TORQUE, high=self.MAX_TORQUE, shape=(1,))
         self.observation_space = spaces.Box(-high, high)
 
@@ -89,7 +90,8 @@ class AcrobotEnv(gym.Env):
 
     def _get_obs(self):
         s = self.state
-        return np.array([np.cos(s[0]), np.sin(s[0]), np.cos(s[1]), np.sin(s[1]), s[2], s[3]])
+        # return np.array([np.cos(s[0]), np.sin(s[0]), np.cos(s[1]), np.sin(s[1]), s[2], s[3]])
+        return np.array([np.cos(s[0]), np.sin(s[0]), s[1], s[2], s[3]])
 
     def _dynamics(self, s, a, dt):
         m1 = self.LINK_MASS_1
