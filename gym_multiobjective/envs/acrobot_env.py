@@ -53,7 +53,7 @@ class AcrobotEnv(gym.Env):
 
     def _reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
-        # self.state[0] += np.pi
+        self.state[0] += np.pi
         return self._get_obs()
 
     def _step(self, action):
