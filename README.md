@@ -7,6 +7,7 @@
 # Installation
 
 ```bash
+git clone https://github.com/kbys-t/gym_MO.git
 cd gym_MO
 pip install -e .
 ```
