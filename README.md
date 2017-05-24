@@ -1,10 +1,13 @@
 # gym_multiobjective
 
+# Dependency
+
+[OpenAI Gym](https://github.com/openai/gym)
 
 # Installation
 
 ```bash
-cd gym_multiobjective
+cd gym_MO
 pip install -e .
 ```
 
