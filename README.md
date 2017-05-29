@@ -1,16 +1,26 @@
 # gym_multiobjective
 
+# Dependency
+
+[OpenAI Gym](https://github.com/openai/gym)
 
 # Installation
 
 ```bash
-cd gym_multiobjective
+git clone https://github.com/kbys-t/gym_MO.git
+cd gym_MO
 pip install -e .
 ```
 
 # How to use
 1. First of all,
 `import gym_multiobjective`
+
+1. Select environment from `AcrobotMO-v0` or `CartPoleMO-v0`
+```python
+ENV_NAME = "AcrobotMO-v0"
+env = gym.make(ENV_NAME)
+```
 
 1. Prepare objectives
 ```python
@@ -28,4 +38,4 @@ Here,
 action = np.concatenate((action, objective))
 observation, reward,, done, info = env.step(action)
 ```
-If objectives are not sent, the same types of reward as OpenAI Gym will be returned.
+If objectives are not sent, the same types of reward as OpenAI Gym will be returned basically.
