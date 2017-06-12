@@ -29,12 +29,12 @@ class AcrobotEnv(gym.Env):
         self.LINK_COM_POS_2 = 6.2052e-2  #: [m] position of the center of mass of link 2
         self.LINK_MOI_1 = 4.3399e-3  #: moments of inertia for link 1
         self.LINK_MOI_2 = 5.2285e-3  #: moments of inertia for link 2
-        self.FRICTION = 0.0    #: friction coefficent for both joints
+        self.FRICTION = 0.0    #: friction coefficent for both joints. If you set, 0.01 is the same parameter as Yoshimoto et al.
         self.LMAX = self.LINK_LENGTH_1 + self.LINK_LENGTH_2 + 0.05  # for display
         # Limitation
         self.MAX_VEL_1 = 4.0 * np.pi
         self.MAX_VEL_2 = 4.0 * np.pi
-        self.MAX_TORQUE = 4.0
+        self.MAX_TORQUE = 4.0   # or 2.0 for swing-up task
         self.MAX_ANG_2 = np.pi
 
         # Create spaces
@@ -53,7 +53,7 @@ class AcrobotEnv(gym.Env):
 
     def _reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
-        self.state[0] += np.pi
+        self.state[0] += np.pi  # comment out, when swing-up task
         return self._get_obs()
 
     def _step(self, action):
@@ -85,6 +85,9 @@ class AcrobotEnv(gym.Env):
         else:
             done = ( - self.LINK_LENGTH_1 * np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos( ns[0] + ns[1] ) ) / ( self.LINK_LENGTH_1 + self.LINK_LENGTH_2 ) > 0.5
             reward = 0.0 if done else -1.0
+            # done = ( - self.LINK_LENGTH_1 * np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos( ns[0] + ns[1] ) ) / ( self.LINK_LENGTH_1 + self.LINK_LENGTH_2 ) > 0.95
+            # reward = 100.0 if done else 0.0
+            # reward -= action[1] * np.absolute(torque) / self.MAX_TORQUE
 
         return (self._get_obs(), reward, done, {})
 
