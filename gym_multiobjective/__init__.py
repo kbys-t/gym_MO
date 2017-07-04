@@ -10,6 +10,12 @@ register(
 )
 
 register(
+    id='AcrobotDRMO-v0',
+    entry_point='gym_multiobjective.envs:AcrobotDREnv',
+    tags={'wrapper_config.TimeLimit.max_episode_steps': 2000},
+)
+
+register(
     id='CartPoleMO-v0',
     entry_point='gym_multiobjective.envs:CartPoleEnv',
     tags={'wrapper_config.TimeLimit.max_episode_steps': 2000},

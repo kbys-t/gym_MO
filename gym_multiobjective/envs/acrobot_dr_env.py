@@ -10,7 +10,7 @@ from gym import spaces
 from gym.utils import seeding
 import numpy as np
 
-class AcrobotEnv(gym.Env):
+class AcrobotDREnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : 50
@@ -52,7 +52,6 @@ class AcrobotEnv(gym.Env):
 
     def _reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
-        self.state[0] += np.pi
         return self._get_obs()
 
     def _step(self, action):
@@ -77,10 +76,15 @@ class AcrobotEnv(gym.Env):
         if len(action) == 4:
             if collision:
                 reward = -1.0
-            else:
-                reward -= action[1] * ( ( np.absolute(torque) / self.MAX_TORQUE - 0.5 ) + ( np.absolute(ns[1]) / self.MAX_ANG_2 - 0.5 ) )
-                reward += action[2] * ( - self.LINK_LENGTH_1 * np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos( ns[0] + ns[1] ) ) / ( self.LINK_LENGTH_1 + self.LINK_LENGTH_2 )
-                reward += action[3] * ( np.absolute(ns[2]) / self.MAX_VEL_1 - 0.5 ) * 2.0
+            reward += (1.0 - np.power(torque / self.MAX_TORQUE, 2)) * 0.02
+            if np.argmax(action[1:]) == 1:
+                # height
+                done = ( - self.LINK_LENGTH_1 * np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos( ns[0] + ns[1] ) ) / ( self.LINK_LENGTH_1 + self.LINK_LENGTH_2 ) > 0.95
+                reward += 100.0 if done else 0.0
+            elif np.argmax(action[1:]) == 2:
+                # velocity
+                done = np.absolute(ns[2]) / self.MAX_VEL_1 > 0.95
+                reward += 100.0 if done else 0.0
         else:
             done = ( - self.LINK_LENGTH_1 * np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos( ns[0] + ns[1] ) ) / ( self.LINK_LENGTH_1 + self.LINK_LENGTH_2 ) > 0.5
             reward = 0.0 if done else -1.0
