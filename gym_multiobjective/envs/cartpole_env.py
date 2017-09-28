@@ -29,7 +29,7 @@ class CartPoleEnv(gym.Env):
         # Limitation
         self.MAX_ANG = 12 * 2 * np.pi / 360   # not use in MO
         self.MAX_X = 2.4
-        self.MAX_VEL_X = 1.0 * self.MAX_X
+        self.MAX_VEL_X = 5.0 * self.MAX_X
         self.MAX_VEL_ANG = 4.0 * np.pi
         self.MAX_FORCE = 10.0
 

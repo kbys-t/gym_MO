@@ -32,9 +32,9 @@ class AcrobotEnv(gym.Env):
         self.FRICTION = 0.0    #: friction coefficent for both joints. If you set, 0.01 is the same parameter as Yoshimoto et al.
         self.LMAX = self.LINK_LENGTH_1 + self.LINK_LENGTH_2 + 0.05  # for display
         # Limitation
-        self.MAX_VEL_1 = 4.0 * np.pi
-        self.MAX_VEL_2 = 4.0 * np.pi
-        self.MAX_TORQUE = 2.5
+        self.MAX_VEL_1 = 10.0
+        self.MAX_VEL_2 = 10.0
+        self.MAX_TORQUE = 4.5
         self.MAX_ANG_2 = np.pi
 
         # Create spaces
@@ -52,7 +52,7 @@ class AcrobotEnv(gym.Env):
 
     def _reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
-        self.state[0] += np.pi
+        # self.state[0] += np.pi
         return self._get_obs()
 
     def _step(self, action):
@@ -89,7 +89,6 @@ class AcrobotEnv(gym.Env):
 
     def _get_obs(self):
         s = self.state
-        # return np.array([np.cos(s[0]), np.sin(s[0]), np.cos(s[1]), np.sin(s[1]), s[2], s[3]])
         return np.array([np.cos(s[0]), np.sin(s[0]), s[1], s[2], s[3]])
 
     def _dynamics(self, s, a, dt):
@@ -146,6 +145,7 @@ class AcrobotEnv(gym.Env):
         self.viewer.draw_line((-self.LMAX, 0), (self.LMAX, 0))
         for ((x,y),th,link) in zip(xys, thetas, links):
             l,r,t,b,s = 0, link, 0.02, -0.02, 0.02
+            # l,r,t,b,s = 0, link, 0.1, -0.1, 0.1
             jtransform = rendering.Transform(rotation=th, translation=(x,y))
             link = self.viewer.draw_polygon([(l,b), (l,t), (r,t), (r,b)])
             link.add_attr(jtransform)
