@@ -10,7 +10,7 @@ from gym import spaces
 from gym.utils import seeding
 import numpy as np
 
-class AcrobotDREnv(gym.Env):
+class AcrobotSWEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : 50
@@ -32,9 +32,9 @@ class AcrobotDREnv(gym.Env):
         self.FRICTION = 0.0    #: friction coefficent for both joints. If you set, 0.01 is the same parameter as Yoshimoto et al.
         self.LMAX = self.LINK_LENGTH_1 + self.LINK_LENGTH_2 + 0.05  # for display
         # Limitation
-        self.MAX_VEL_1 = 4.0 * np.pi
-        self.MAX_VEL_2 = 4.0 * np.pi
-        self.MAX_TORQUE = 2.5
+        self.MAX_VEL_1 = 10.0
+        self.MAX_VEL_2 = 10.0
+        self.MAX_TORQUE = 4.5
         self.MAX_ANG_2 = np.pi
 
         # Create spaces
@@ -52,6 +52,7 @@ class AcrobotDREnv(gym.Env):
 
     def _reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
+        # self.state[0] += np.pi  # difference is here
         return self._get_obs()
 
     def _step(self, action):
@@ -76,15 +77,10 @@ class AcrobotDREnv(gym.Env):
         if len(action) == 4:
             if collision:
                 reward = -1.0
-            reward += (1.0 - np.power(torque / self.MAX_TORQUE, 2)) * 0.02
-            if np.argmax(action[1:]) == 1:
-                # height
-                done = ( - self.LINK_LENGTH_1 * np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos( ns[0] + ns[1] ) ) / ( self.LINK_LENGTH_1 + self.LINK_LENGTH_2 ) > 0.95
-                reward += 100.0 if done else 0.0
-            elif np.argmax(action[1:]) == 2:
-                # velocity
-                done = np.absolute(ns[2]) / self.MAX_VEL_1 > 0.95
-                reward += 100.0 if done else 0.0
+            else:
+                reward -= action[1] * ( ( np.absolute(torque) / self.MAX_TORQUE - 0.5 ) + ( np.absolute(ns[1]) / self.MAX_ANG_2 - 0.5 ) )
+                reward += action[2] * ( - self.LINK_LENGTH_1 * np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos( ns[0] + ns[1] ) ) / ( self.LINK_LENGTH_1 + self.LINK_LENGTH_2 )
+                reward += action[3] * ( np.absolute(ns[2]) / self.MAX_VEL_1 - 0.5 ) * 2.0
         else:
             done = ( - self.LINK_LENGTH_1 * np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos( ns[0] + ns[1] ) ) / ( self.LINK_LENGTH_1 + self.LINK_LENGTH_2 ) > 0.5
             reward = 0.0 if done else -1.0
@@ -93,7 +89,6 @@ class AcrobotDREnv(gym.Env):
 
     def _get_obs(self):
         s = self.state
-        # return np.array([np.cos(s[0]), np.sin(s[0]), np.cos(s[1]), np.sin(s[1]), s[2], s[3]])
         return np.array([np.cos(s[0]), np.sin(s[0]), s[1], s[2], s[3]])
 
     def _dynamics(self, s, a, dt):
@@ -150,6 +145,7 @@ class AcrobotDREnv(gym.Env):
         self.viewer.draw_line((-self.LMAX, 0), (self.LMAX, 0))
         for ((x,y),th,link) in zip(xys, thetas, links):
             l,r,t,b,s = 0, link, 0.02, -0.02, 0.02
+            # l,r,t,b,s = 0, link, 0.1, -0.1, 0.1
             jtransform = rendering.Transform(rotation=th, translation=(x,y))
             link = self.viewer.draw_polygon([(l,b), (l,t), (r,t), (r,b)])
             link.add_attr(jtransform)

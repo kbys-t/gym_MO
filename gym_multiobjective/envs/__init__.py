@@ -1,3 +1,3 @@
 from gym_multiobjective.envs.acrobot_env import AcrobotEnv
-from gym_multiobjective.envs.acrobot_dr_env import AcrobotDREnv
+from gym_multiobjective.envs.acrobot_sw_env import AcrobotSWEnv
 from gym_multiobjective.envs.cartpole_env import CartPoleEnv
