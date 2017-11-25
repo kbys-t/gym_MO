@@ -16,7 +16,7 @@ pip install -e .
 1. First of all,
 `import gym_multiobjective`
 
-1. Select environment from `AcrobotMO-v0` or `CartPoleMO-v0`
+1. Select environment from `["CartPoleMO-v0", "TwolinkMO-v0", "AcrobotMO-v0", "AcrobotMO-v1"]`
 ```python
 ENV_NAME = "AcrobotMO-v0"
 env = gym.make(ENV_NAME)
@@ -24,14 +24,13 @@ env = gym.make(ENV_NAME)
 
 1. Prepare objectives
 ```python
-objective = np.array([0.1, 1.0, 0.0])
-objective = objective / np.linalg.norm(objective, 1)
+objective = np.array([0.0, 1.0, 0.0])
 ```
 It's desired to normalize objective to make reward within [-1, 1]  
 Here,
   + 0-th is for motion minimization,
-  + 1-th is for height,
-  + 2-th is for angular velocity
+  + 1-th is for position control (e.g., standing pendulum),
+  + 2-th is for velocity control (e.g., rotating pendulum)
 
 1. Send objectives together with action
 ```python
