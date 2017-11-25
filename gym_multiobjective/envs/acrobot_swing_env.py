@@ -10,7 +10,7 @@ from gym import spaces
 from gym.utils import seeding
 import numpy as np
 
-class AcrobotEnv(gym.Env):
+class AcrobotSwingEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : 50
@@ -52,7 +52,7 @@ class AcrobotEnv(gym.Env):
 
     def _reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
-        self.state[0] += np.pi  # difference is here
+        # self.state[0] += np.pi  # difference is here
         return self._get_obs()
 
     def _step(self, action):
@@ -135,8 +135,8 @@ class AcrobotEnv(gym.Env):
         p1 = [self.LINK_LENGTH_1 * np.sin(s[0]),
               -self.LINK_LENGTH_1 *np.cos(s[0])]
 
-        p2 = [p1[1] + self.LINK_LENGTH_2 * np.sin(s[0] + s[1]),
-              p1[0] - self.LINK_LENGTH_2 * np.cos(s[0] + s[1])]
+        p2 = [p1[0] + self.LINK_LENGTH_2 * np.sin(s[0] + s[1]),
+              p1[1] - self.LINK_LENGTH_2 * np.cos(s[0] + s[1])]
 
         xys = [[0,0], p1, p2]
         thetas = [s[0]-0.5*np.pi, s[0]+s[1]-0.5*np.pi]
@@ -144,13 +144,12 @@ class AcrobotEnv(gym.Env):
 
         self.viewer.draw_line((-self.LMAX, 0), (self.LMAX, 0))
         for ((x,y),th,link) in zip(xys, thetas, links):
-            l,r,t,b,s = 0, link, 0.02, -0.02, 0.02
-            # l,r,t,b,s = 0, link, 0.1, -0.1, 0.1
+            l,r,t,b,c = 0, link, self.LMAX/22.5, -self.LMAX/22.5, self.LMAX/22.5
             jtransform = rendering.Transform(rotation=th, translation=(x,y))
             link = self.viewer.draw_polygon([(l,b), (l,t), (r,t), (r,b)])
             link.add_attr(jtransform)
             link.set_color(0, 0.8, 0.8)
-            circ = self.viewer.draw_circle(s)
+            circ = self.viewer.draw_circle(c)
             circ.set_color(0.8, 0.8, 0)
             circ.add_attr(jtransform)
 
