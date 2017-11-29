@@ -1,4 +1,5 @@
+from gym_multiobjective.envs.cartpole_env import CartPoleEnv
 from gym_multiobjective.envs.acrobot_balance_env import AcrobotBalanceEnv
 from gym_multiobjective.envs.acrobot_swing_env import AcrobotSwingEnv
-from gym_multiobjective.envs.cartpole_env import CartPoleEnv
-from gym_multiobjective.envs.twolink_env import TwolinkEnv
+from gym_multiobjective.envs.ballarm_static_env import BallArmStaticEnv
+from gym_multiobjective.envs.ballarm_dynamic_env import BallArmDynamicEnv

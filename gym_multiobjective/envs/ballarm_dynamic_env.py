@@ -1,6 +1,6 @@
 # coding:utf-8
 """
-Two link arm for reaching or rotating object
+Two link arm for reaching or hitting object
 In part, Copied from OpenAI gym
 """
 
@@ -9,7 +9,7 @@ from gym import spaces
 from gym.utils import seeding
 import numpy as np
 
-class TwolinkEnv(gym.Env):
+class BallArmDynamicEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : 50
@@ -30,16 +30,18 @@ class TwolinkEnv(gym.Env):
         self.FRICTION = 0.0    #: friction coefficent for both joints. If you set, 0.01 is the same parameter as Yoshimoto et al.
         self.LMAX = self.LINK_LENGTH_1 + self.LINK_LENGTH_2  # for display
         self.OBJ_MASS = 0.0027
-        self.OBJ_SPRING = self.OBJ_MASS * 5.0**2
-        self.OBJ_DAMPER = 0.5 * 2.0 * np.sqrt(self.OBJ_MASS * self.OBJ_SPRING)
+        self.OBJ_SPRING = self.OBJ_MASS * 8.0**2
+        self.OBJ_DAMPER = 0.2 * 2.0 * np.sqrt(self.OBJ_MASS * self.OBJ_SPRING)
         self.OBJ_REST = np.array([0.0, -0.8*self.LMAX])
         self.OBJ_SIZE = 0.02
+        self.OBJ_CYCLE = 0.05  # difference is here
+        self.OBJ_REST[1] -= self.OBJ_CYCLE # difference is here
         # Limitation
         self.MAX_VEL = 10.0
-        self.MAX_TORQUE = 2.0
+        self.MAX_TORQUE = 4.5 * 0.5
         self.MAX_ANG = np.pi
-        self.MAX_OBJ_POS = 1.25 * self.LMAX
-        self.MAX_OBJ_VEL = 1.0
+        self.MAX_OBJ_POS = self.LMAX + 0.05
+        self.MAX_OBJ_VEL = 10.0
 
         # Create spaces
         high_obs = np.array([self.MAX_ANG, self.MAX_ANG, self.MAX_VEL, self.MAX_VEL, self.MAX_OBJ_POS, self.MAX_OBJ_POS, self.MAX_OBJ_VEL, self.MAX_OBJ_VEL])
@@ -59,6 +61,7 @@ class TwolinkEnv(gym.Env):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(8,))
         self.state[0] += np.pi
         self.state[4:6] += self.OBJ_REST
+        self.elapsed = 0.0 # difference is here
         return self._get_obs()
 
     def _step(self, action):
@@ -73,7 +76,7 @@ class TwolinkEnv(gym.Env):
         ns[2:4] = np.clip(ns[2:4], -self.MAX_VEL, self.MAX_VEL)
         # limit of object
         ns[6:8][np.absolute(ns[4:6]) > self.MAX_OBJ_POS] *= -1.0
-        ns[4:6] = np.clip(ns[4:6], -self.MAX_OBJ_POS, self.MAX_OBJ_POS)
+        ns[4:6] = np.clip(ns[4:6], -self.MAX_OBJ_POS+self.OBJ_SIZE, self.MAX_OBJ_POS-self.OBJ_SIZE)
         ns[6:8] = np.clip(ns[6:8], -self.MAX_OBJ_VEL, self.MAX_OBJ_VEL)
 
         self.state = ns
@@ -129,6 +132,8 @@ class TwolinkEnv(gym.Env):
         ddtheta1 = - ( d12*ddtheta2 + hphi1 + mu*dtheta1 - a[0] ) / d11
 
         # object
+        pr += self.OBJ_CYCLE * np.array([np.sin(np.pi*(self.elapsed+dt)) - np.sin(np.pi*self.elapsed), - np.cos(np.pi*(self.elapsed+dt)) + np.cos(np.pi*self.elapsed)]) # difference is here
+        self.elapsed += dt # difference is here
         ddx = - ( kc * (x-pr[0]) + dc * dx) / mc
         ddy = - ( kc * (y-pr[1]) + dc * dy) / mc
 

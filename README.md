@@ -16,7 +16,7 @@ pip install -e .
 1. First of all,
 `import gym_multiobjective`
 
-1. Select environment from `["CartPoleMO-v0", "TwolinkMO-v0", "AcrobotMO-v0", "AcrobotMO-v1"]`
+1. Select environment from `["CartPoleMO-v0", "AcrobotMO-v0", "AcrobotMO-v1", "BallArmMO-v0", "BallArmMO-v1"]`
 ```python
 ENV_NAME = "AcrobotMO-v0"
 env = gym.make(ENV_NAME)
