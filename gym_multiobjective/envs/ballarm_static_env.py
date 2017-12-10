@@ -68,6 +68,7 @@ class BallArmStaticEnv(gym.Env):
         ns = self._dynamics(s, torque, self.DT)
 
         # limit of two link
+        collision = np.absolute(ns[0:2]) > self.MAX_ANG
         ns[2:4][np.absolute(ns[0:2]) > self.MAX_ANG] = 0.0
         ns[0:2] = np.clip(ns[0:2], -self.MAX_ANG, self.MAX_ANG)
         ns[2:4] = np.clip(ns[2:4], -self.MAX_VEL, self.MAX_VEL)
@@ -81,7 +82,9 @@ class BallArmStaticEnv(gym.Env):
         # reward design
         reward = 0.0
         done = False
-        if len(action) == 5:
+        if any(collision):
+            reward = -1.0
+        elif len(action) == 5:
             pt = np.array([ self.LINK_LENGTH_1 * np.sin(ns[0]) + self.LINK_LENGTH_2 * np.sin(ns[0] + ns[1]) , \
                 - self.LINK_LENGTH_1 *np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos(ns[0] + ns[1]) ])
             reward -= action[2] * ( np.absolute(torque).mean() / self.MAX_TORQUE - 0.5 ) * 2.0
@@ -89,8 +92,8 @@ class BallArmStaticEnv(gym.Env):
             reward += action[4] * ( 0.5 - np.exp( - 2.0 * np.linalg.norm(ns[6:8]) ) ) * 2.0
             # reward += action[4] * ( np.linalg.norm(ns[6:8]) / self.MAX_OBJ_VEL - 0.5 ) * 2.0
         else:
-            done = np.linalg.norm(ns[4:6]) > self.LMAX + self.OBJ_SIZE
-            reward = 0.0 if done else -1.0
+            done = np.linalg.norm(ns[4:6]) > self.LMAX + 2.0*self.OBJ_SIZE
+            reward = 1.0 if done else -1.0
 
         return (self._get_obs(), reward, done, {})
 
