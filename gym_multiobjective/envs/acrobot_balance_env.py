@@ -42,6 +42,9 @@ class AcrobotBalanceEnv(gym.Env):
         self.action_space = spaces.Box(low=-self.MAX_TORQUE, high=self.MAX_TORQUE, shape=(1,))
         self.observation_space = spaces.Box(-high, high)
 
+        # set the number of tasks
+        self.TASK_NUM = 3
+
         # Initialize
         self._seed()
         self.viewer = None
