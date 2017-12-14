@@ -29,13 +29,14 @@ class BallArmStaticEnv(gym.Env):
         self.LINK_MOI_2 = 5.2285e-3  #: moments of inertia for link 2
         self.FRICTION = 0.0    #: friction coefficent for both joints. If you set, 0.01 is the same parameter as Yoshimoto et al.
         self.LMAX = self.LINK_LENGTH_1 + self.LINK_LENGTH_2  # for display
+        self.LINK_SIZE = 0.025
         self.OBJ_MASS = 0.0027
-        self.OBJ_SPRING = self.OBJ_MASS * 8.0**2
+        self.OBJ_SPRING = self.OBJ_MASS * 5.0**2
         self.OBJ_DAMPER = 0.2 * 2.0 * np.sqrt(self.OBJ_MASS * self.OBJ_SPRING)
-        self.OBJ_REST = np.array([0.0, -0.8*self.LMAX])
+        self.OBJ_REST = np.array([0.0, -0.6*self.LMAX])
         self.OBJ_SIZE = 0.02
         # Limitation
-        self.MAX_VEL = 10.0
+        self.MAX_VEL = 10.0 * 0.75
         self.MAX_TORQUE = 4.5 * 0.5
         self.MAX_ANG = np.pi
         self.MAX_OBJ_POS = self.LMAX + 0.05
@@ -93,7 +94,7 @@ class BallArmStaticEnv(gym.Env):
             reward -= action[2] * ( np.absolute(torque).mean() / self.MAX_TORQUE - 0.5 ) * 2.0
             reward += action[3] * ( np.exp( - 2.0 * np.linalg.norm(pt - ns[4:6]) ) - 0.5 ) * 2.0
             reward += action[4] * ( 0.5 - np.exp( - 2.0 * np.linalg.norm(ns[6:8]) ) ) * 2.0
-            reward += action[5] * ( 0.5 - np.exp( - 5.0 * np.linalg.norm(self.OBJ_REST - ns[4:6]) ) ) * 2.0
+            reward += action[5] * ( 0.5 - np.exp( - 2.0 * np.linalg.norm(self.OBJ_REST - ns[4:6]) ) ) * 2.0
         else:
             done = np.linalg.norm(ns[4:6]) > self.LMAX + 2.0*self.OBJ_SIZE
             reward = 1.0 if done else -1.0
@@ -119,7 +120,7 @@ class BallArmStaticEnv(gym.Env):
         kc = self.OBJ_SPRING
         dc = self.OBJ_DAMPER
         pr = self.OBJ_REST
-        r = self.OBJ_SIZE
+        sz = self.OBJ_SIZE + self.LINK_SIZE
         theta1, theta2, dtheta1, dtheta2, x, y, dx, dy = s
 
         # twolink
@@ -154,7 +155,9 @@ class BallArmStaticEnv(gym.Env):
         d1 = np.linalg.norm(pc-i1)
         d2 = np.linalg.norm(pc-i2)
         # judge
-        if d2 <= 2.0 * r and i2[0] >= np.minimum(p1[0], p2[0]) and i2[0] <= np.maximum(p1[0], p2[0]):
+        if d2 <= sz and i2[0] >= np.minimum(p1[0], p2[0]) and i2[0] <= np.maximum(p1[0], p2[0]):
+            # velocity update (arm velocity is assumed to be constant)
+            ec = 1.0
             mg = m1 + m2
             pgn = np.array([\
                 m1*( lc1 * np.sin(ns[0]) ) + m2*( p1[0] + lc2 * np.sin(ns[0]+ns[1]) ) , \
@@ -165,21 +168,35 @@ class BallArmStaticEnv(gym.Env):
                 m1*( - lc1 * np.cos(s[0]) ) + m2*( - l1 * np.cos(s[0]) - lc2 * np.cos(s[0]+s[1]) ) \
                 ]) / mg
             vg = (pgn - pgo) / dt
-            dd = 2.0 * r - d2
+            vc = np.array([ns[6], ns[7]])
+            ns[6], ns[7] = ( (1.0+ec)*mg*vg + (mc-mg*ec)*vc ) / (mg + mc)
+            # position update (arm position is assumed to be constant)
+            # judge whether penetrate or not
+            if (dp[0]*s[5] - dp[1]*s[4]) * (dp[0]*ns[5] - dp[1]*ns[4]) < 0.0:
+                pc = np.array([s[4], s[5]])
+                d2 = np.linalg.norm(pc-i2)
+            dd = sz - d2
             ro = np.arctan2( (pc[1]-i2[1]) , (pc[0]-i2[0]) )
-            ns[6], ns[7] = ( 2.0*mg*vg + (mc-mg)*np.array([s[6], s[7]]) ) / (mg + mc)
-            ns[4] += ns[6]*dt + dd * np.cos(ro)
-            ns[5] += ns[7]*dt + dd * np.sin(ro)
-        elif d1 <= 2.0 * r and i1[0] >= np.minimum(0.0, p1[0]) and i1[0] <= np.maximum(0.0, p1[0]):
+            ns[4] = pc[0] + dd * np.cos(ro) + ns[6]*dt
+            ns[5] = pc[1] + dd * np.sin(ro) + ns[7]*dt
+        elif d1 <= sz and i1[0] >= np.minimum(0.0, p1[0]) and i1[0] <= np.maximum(0.0, p1[0]):
+            # velocity update (arm velocity is assumed to be constant)
+            ec = 1.0
             mg = m1
             pgn = np.array([lc1 * np.sin(ns[0]),  - lc1 * np.cos(ns[0])])
             pgo = np.array([lc1 * np.sin(s[0]),  - lc1 * np.cos(s[0])])
             vg = (pgn - pgo) / dt
-            dd = 2.0 * r - d1
+            vc = np.array([ns[6], ns[7]])
+            ns[6], ns[7] = ( (1.0+ec)*mg*vg + (mc-mg*ec)*vc ) / (mg + mc)
+            # position update (arm position is assumed to be constant)
+            # judge whether penetrate or not
+            if (p1[0]*s[5] - p1[1]*s[4]) * (p1[0]*ns[5] - p1[1]*ns[4]) < 0.0:
+                pc = np.array([s[4], s[5]])
+                d1 = np.linalg.norm(pc-i1)
+            dd = sz - d1
             ro = np.arctan2( (pc[1]-i1[1]) , (pc[0]-i1[0]) )
-            ns[6], ns[7] = ( 2.0*mg*vg + (mc-mg)*np.array([s[6], s[7]]) ) / (mg + mc)
-            ns[4] += ns[6]*dt + dd * np.cos(ro)
-            ns[5] += ns[7]*dt + dd * np.sin(ro)
+            ns[4] = pc[0] + dd * np.cos(ro) + ns[6]*dt
+            ns[5] = pc[1] + dd * np.sin(ro) + ns[7]*dt
 
         return ns
 
@@ -209,7 +226,7 @@ class BallArmStaticEnv(gym.Env):
 
         self.viewer.draw_circle(radius=self.LMAX, res=30, filled=False)
         for ((x,y),th,link) in zip(xys, thetas, links):
-            l,r,t,b,c = 0, link, self.OBJ_SIZE, -self.OBJ_SIZE, self.OBJ_SIZE
+            l,r,t,b,c = 0, link, self.LINK_SIZE, -self.LINK_SIZE, self.LINK_SIZE
             jtransform = rendering.Transform(rotation=th, translation=(x,y))
             link = self.viewer.draw_polygon([(l,b), (l,t), (r,t), (r,b)])
             link.add_attr(jtransform)
