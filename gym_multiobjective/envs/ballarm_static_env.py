@@ -34,8 +34,9 @@ class BallArmStaticEnv(gym.Env):
         self.OBJ_SPRING = self.OBJ_MASS * 5.0**2
         self.OBJ_DAMPER = 0.2 * 2.0 * np.sqrt(self.OBJ_MASS * self.OBJ_SPRING)
         self.OBJ_REST = np.array([0.0, -0.6*self.LMAX])
+        self.OBJ_RESTITUTION = 0.8
         self.OBJ_SIZE = 0.02
-        
+
         # Limitation
         self.MAX_VEL = 10.0 * 0.75
         self.MAX_TORQUE = 4.5 * 0.5
@@ -120,6 +121,7 @@ class BallArmStaticEnv(gym.Env):
         mc = self.OBJ_MASS
         kc = self.OBJ_SPRING
         dc = self.OBJ_DAMPER
+        ec = self.OBJ_RESTITUTION
         pr = self.OBJ_REST
         sz = self.OBJ_SIZE + self.LINK_SIZE
         theta1, theta2, dtheta1, dtheta2, x, y, dx, dy = s
@@ -161,16 +163,9 @@ class BallArmStaticEnv(gym.Env):
         isl1 = d1 <= sz and i1[0] >= np.minimum(0.0, p1[0]) and i1[0] <= np.maximum(0.0, p1[0])
         if isl2 or istip:
             # velocity update (arm velocity is assumed to be constant)
-            ec = 1.0
-            mg = m1 + m2
-            pgn = np.array([\
-                m1*( lc1 * np.sin(ns[0]) ) + m2*( p1[0] + lc2 * np.sin(ns[0]+ns[1]) ) , \
-                m1*( - lc1 * np.cos(ns[0]) ) + m2*( p1[1] - lc2 * np.cos(ns[0]+ns[1]) ) \
-                ]) / mg
-            pgo = np.array([\
-                m1*( lc1 * np.sin(s[0]) ) + m2*( l1 * np.sin(s[0]) + lc2 * np.sin(s[0]+s[1]) ) , \
-                m1*( - lc1 * np.cos(s[0]) ) + m2*( - l1 * np.cos(s[0]) - lc2 * np.cos(s[0]+s[1]) ) \
-                ]) / mg
+            mg = m2
+            pgn = np.array([ p1[0] + lc2 * np.sin(ns[0]+ns[1]) , p1[1] - lc2 * np.cos(ns[0]+ns[1]) ])
+            pgo = np.array([ l1 * np.sin(s[0]) + lc2 * np.sin(s[0]+s[1]) , - l1 * np.cos(s[0]) - lc2 * np.cos(s[0]+s[1]) ])
             vg = (pgn - pgo) / dt
             vc = np.array([ns[6], ns[7]])
             ns[6:8] = ( (1.0+ec)*mg*vg + (mc-mg*ec)*vc ) / (mg + mc)
@@ -188,7 +183,6 @@ class BallArmStaticEnv(gym.Env):
                 ns[5] = pc[1] + dd * np.sin(ro) + ns[7]*dt
         elif isl1:
             # velocity update (arm velocity is assumed to be constant)
-            ec = 1.0
             mg = m1
             pgn = np.array([lc1 * np.sin(ns[0]),  - lc1 * np.cos(ns[0])])
             pgo = np.array([lc1 * np.sin(s[0]),  - lc1 * np.cos(s[0])])
