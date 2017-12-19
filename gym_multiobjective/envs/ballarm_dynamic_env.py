@@ -32,9 +32,9 @@ class BallArmDynamicEnv(gym.Env):
         self.LINK_SIZE = 0.025
         self.OBJ_MASS = 0.0027
         self.OBJ_SPRING = self.OBJ_MASS * 5.0**2
-        self.OBJ_DAMPER = 0.2 * 2.0 * np.sqrt(self.OBJ_MASS * self.OBJ_SPRING)
+        self.OBJ_DAMPER = 0.25 * 2.0 * np.sqrt(self.OBJ_MASS * self.OBJ_SPRING)
         self.OBJ_REST = np.array([0.0, -0.6*self.LMAX])
-        self.OBJ_RESTITUTION = 0.8
+        self.OBJ_RESTITUTION = 1.0
         self.OBJ_SIZE = 0.02
         self.OBJ_CYCLE = 0.05  # difference is here
         self.OBJ_REST[1] -= self.OBJ_CYCLE # difference is here
@@ -54,6 +54,7 @@ class BallArmDynamicEnv(gym.Env):
 
         # set the number of tasks
         self.TASK_NUM = 4
+        self.TASK_NAME = ["tip", "velocity", "elbow", "energy"]
 
         # Initialize
         self._seed()
@@ -93,13 +94,14 @@ class BallArmDynamicEnv(gym.Env):
         done = False
         if any(collision):
             reward = -1.0
-        elif len(action) == 6:
+        elif len(action) == self.action_space.shape[0] + self.TASK_NUM:
             pt = np.array([ self.LINK_LENGTH_1 * np.sin(ns[0]) + self.LINK_LENGTH_2 * np.sin(ns[0] + ns[1]) , \
                 - self.LINK_LENGTH_1 *np.cos(ns[0]) - self.LINK_LENGTH_2 * np.cos(ns[0] + ns[1]) ])
-            reward -= action[2] * ( np.absolute(torque).mean() / self.MAX_TORQUE - 0.5 ) * 2.0
-            reward += action[3] * ( np.exp( - 2.0 * np.linalg.norm(pt - ns[4:6]) ) - 0.5 ) * 2.0
-            reward += action[4] * ( 0.5 - np.exp( - 2.0 * np.linalg.norm(ns[6:8]) ) ) * 2.0
-            reward += action[5] * ( ns[5] / self.MAX_OBJ_POS )  # tentative
+            reward += action[2] * ( np.exp( - 2.0 * np.linalg.norm(pt - ns[4:6]) ) - 0.5 ) * 2.0
+            reward += action[3] * ( 0.5 - np.exp( - 2.0 * np.linalg.norm(ns[6:8]) ) ) * 2.0
+            pt2 = np.array([ self.LINK_LENGTH_1 * np.sin(ns[0]), - self.LINK_LENGTH_1 *np.cos(ns[0]) ])
+            reward += action[4] * ( np.exp( - 2.0 * np.linalg.norm(pt2 - ns[4:6]) ) - 0.5 ) * 2.0
+            reward -= action[5] * ( np.absolute(torque).mean() / self.MAX_TORQUE - 0.5 ) * 2.0
         else:
             done = np.linalg.norm(ns[4:6]) > self.LMAX + 2.0*self.OBJ_SIZE
             reward = 1.0 if done else -1.0

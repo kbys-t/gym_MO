@@ -40,6 +40,7 @@ class CartPoleEnv(gym.Env):
 
         # set the number of tasks
         self.TASK_NUM = 3
+        self.TASK_NAME = ["height", "velocity", "energy"]
 
         # Initialize
         self._seed()
@@ -72,14 +73,14 @@ class CartPoleEnv(gym.Env):
 
         # reward design
         reward = 0.0
-        if len(action) == 4:
+        if len(action) == self.action_space.shape[0] + self.TASK_NUM:
             done = False
             if collision:
                 reward = -1.0
             else:
-                reward -= action[1] * ( ( np.absolute(force) / self.MAX_FORCE - 0.5 ) + ( np.absolute(ns[0]) / self.MAX_X - 0.5 ) )
-                reward += action[2] * np.cos(ns[1])
-                reward += action[3] * ( np.absolute(ns[3]) / self.MAX_VEL_ANG - 0.5 ) * 2.0
+                reward += action[1] * np.cos(ns[1])
+                reward += action[2] * ( np.absolute(ns[3]) / self.MAX_VEL_ANG - 0.5 ) * 2.0
+                reward -= action[3] * ( ( np.absolute(force) / self.MAX_FORCE - 0.5 ) + ( np.absolute(ns[0]) / self.MAX_X - 0.5 ) )
         else:
             done = collision or np.absolute(ns[1]) > self.MAX_ANG
             reward = 0.0 if done else 1.0
