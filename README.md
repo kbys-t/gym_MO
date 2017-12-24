@@ -33,6 +33,6 @@ It's desired to normalize objective to make reward within [-1, 1]
 1. Send objectives together with action
 ```python
 action = np.concatenate((action, objective))
-observation, reward,, done, info = env.step(action)
+observation, reward, done, info = env.step(action)
 ```
 If objectives are not sent, the same types of reward as OpenAI Gym will be returned basically.
