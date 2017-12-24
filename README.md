@@ -24,13 +24,11 @@ env = gym.make(ENV_NAME)
 
 1. Prepare objectives
 ```python
-objective = np.array([0.0, 1.0, 0.0])
+task_name = env.TASK_NAME
+objective = np.zeros(env.TASK_NUM)
+objective[0] = 1.0  # choice from 0 ~ env.TASK_NUM-1
 ```
 It's desired to normalize objective to make reward within [-1, 1]  
-Here,
-  + 0-th is for motion minimization,
-  + 1-th is for position control (e.g., standing pendulum),
-  + 2-th is for velocity control (e.g., rotating pendulum)
 
 1. Send objectives together with action
 ```python
