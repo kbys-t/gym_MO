@@ -10,7 +10,7 @@ from gym import spaces
 from gym.utils import seeding
 import numpy as np
 
-class CartPoleEnv(gym.Env):
+class CartPoleBalanceEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : 50
@@ -27,10 +27,10 @@ class CartPoleEnv(gym.Env):
         self.LEN_POLE = 0.5 # actually half the pole's length
         self.MASSLEN_POLE = (self.MASS_POLE * self.LEN_POLE)
         # Limitation
-        self.MAX_ANG = 12 * 2 * np.pi / 360   # not use in MO
+        self.MAX_ANG = 12.0 * 2.0 * np.pi / 360.0   # not use in MO
         self.MAX_X = 2.4
-        self.MAX_VEL_X = 5.0 * self.MAX_X
-        self.MAX_VEL_ANG = 4.0 * np.pi
+        self.MAX_VEL_X = 2.0
+        self.MAX_VEL_ANG = 2.5 * np.pi
         self.MAX_FORCE = 10.0
 
         # Create spaces
@@ -52,7 +52,7 @@ class CartPoleEnv(gym.Env):
 
     def _reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
-        # self.state[1] += np.pi
+        # self.state[1] += np.pi  # difference is here
         return self._get_obs()
 
     def _step(self, action):
@@ -112,7 +112,7 @@ class CartPoleEnv(gym.Env):
         screen_width = 500
         screen_height = 500
 
-        world_width = self.MAX_X*2
+        world_width = self.MAX_X*2.225
         scale = screen_width/world_width
         carty = 250 # TOP OF CART
         polewidth = 10.0 * 0.5

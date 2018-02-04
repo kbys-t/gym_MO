@@ -68,7 +68,7 @@ class AcrobotBalanceEnv(gym.Env):
         ns[2] = np.clip(ns[2], -self.MAX_VEL_1, self.MAX_VEL_1)
         ns[3] = np.clip(ns[3], -self.MAX_VEL_2, self.MAX_VEL_2)
         ns[0] = angle_normalize(ns[0])
-        collision =np.absolute(ns[1]) > self.MAX_ANG_2
+        collision = np.absolute(ns[1]) > self.MAX_ANG_2
         if collision:
             ns[1] = np.clip(ns[1], -self.MAX_ANG_2, self.MAX_ANG_2)
             ns[3] = 0.0
