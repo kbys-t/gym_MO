@@ -5,6 +5,7 @@ Based on the source of OpenAI gym
 import gym
 from gym import spaces
 from gym.utils import seeding
+from gym.envs.classic_control import rendering
 import numpy as np
 from os import path
 
@@ -32,14 +33,14 @@ class PendulumSwingEnv(gym.Env):
         self.TASK_NAME = ["height", "velocity", "energy"]
 
         # Initialize
-        self._seed()
+        self.seed()
         self.viewer = None
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _reset(self):
+    def reset(self):
         # high = np.array([np.pi, 1])
         high = np.array([0.05, 0.05])
         self.state = self.np_random.uniform(low=-high, high=high)
@@ -47,7 +48,7 @@ class PendulumSwingEnv(gym.Env):
         self.last_u = None
         return self._get_obs()
 
-    def _step(self, action):
+    def step(self, action):
         s = self.state
         torque = np.clip(action[0], -self.MAX_TORQUE, self.MAX_TORQUE)
         self.last_u = torque # for rendering
@@ -55,7 +56,7 @@ class PendulumSwingEnv(gym.Env):
         ns = self._dynamics(s, torque, self.DT)
 
         ns[1] = np.clip(ns[1], -self.MAX_VEL, self.MAX_VEL)
-        ns[0] = angle_normalize(ns[0])
+        ns[0] = self._angle_normalize(ns[0])
 
         self.state = ns
 
@@ -69,7 +70,7 @@ class PendulumSwingEnv(gym.Env):
         else:
             reward = - (s[0] + 0.1*s[1]**2 + .001*(torque**2))
 
-        return (self._get_obs(), reward, done, {})
+        return self._get_obs(), reward, done, {}
 
     def _get_obs(self):
         s = self.state
@@ -85,15 +86,11 @@ class PendulumSwingEnv(gym.Env):
 
         return s + np.array([dtheta, ddtheta]) * dt
 
-    def _render(self, mode='human', close=False):
-        if close:
-            if self.viewer is not None:
-                self.viewer.close()
-                self.viewer = None
-            return
+    def _angle_normalize(self, x):
+        return (((x+np.pi) % (2*np.pi)) - np.pi)
 
+    def render(self, mode='human'):
         if self.viewer is None:
-            from gym.envs.classic_control import rendering
             self.viewer = rendering.Viewer(500,500)
             self.viewer.set_bounds(-2.2,2.2,-2.2,2.2)
             rod = rendering.make_capsule(self.LINK_LENGTH, 0.2*self.LINK_LENGTH)
@@ -116,5 +113,5 @@ class PendulumSwingEnv(gym.Env):
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
-def angle_normalize(x):
-    return (((x+np.pi) % (2*np.pi)) - np.pi)
+    def close(self):
+        if self.viewer: self.viewer.close()

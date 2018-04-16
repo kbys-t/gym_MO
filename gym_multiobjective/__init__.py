@@ -1,16 +1,16 @@
-import logging
+# import logging
 from gym.envs.registration import registry, register, make, spec
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 register(
-id='PendulumMO-v0',
-entry_point='gym_multiobjective.envs:PendulumBalanceEnv',
+    id='PendulumMO-v0',
+    entry_point='gym_multiobjective.envs:PendulumBalanceEnv',
 )
 
 register(
-id='PendulumMO-v1',
-entry_point='gym_multiobjective.envs:PendulumSwingEnv',
+    id='PendulumMO-v1',
+    entry_point='gym_multiobjective.envs:PendulumSwingEnv',
 )
 
 register(

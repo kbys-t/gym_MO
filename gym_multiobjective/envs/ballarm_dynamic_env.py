@@ -7,6 +7,7 @@ In part, Copied from OpenAI gym
 import gym
 from gym import spaces
 from gym.utils import seeding
+from gym.envs.classic_control import rendering
 import numpy as np
 
 class BallArmDynamicEnv(gym.Env):
@@ -57,21 +58,21 @@ class BallArmDynamicEnv(gym.Env):
         self.TASK_NAME = ["tip", "velocity", "elbow", "energy"]
 
         # Initialize
-        self._seed()
+        self.seed()
         self.viewer = None
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _reset(self):
+    def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(8,))
         self.state[0] += np.pi
         self.state[4:6] += self.OBJ_REST
         self.elapsed = 0.0 # difference is here
         return self._get_obs()
 
-    def _step(self, action):
+    def step(self, action):
         s = self.state
         torque = np.clip(action[:2], -self.MAX_TORQUE, self.MAX_TORQUE)
 
@@ -106,7 +107,7 @@ class BallArmDynamicEnv(gym.Env):
             done = np.linalg.norm(ns[4:6]) > self.LMAX + 2.0*self.OBJ_SIZE
             reward = 1.0 if done else -1.0
 
-        return (self._get_obs(), reward, done, {})
+        return self._get_obs(), reward, done, {}
 
     def _get_obs(self):
         s = self.state
@@ -208,14 +209,7 @@ class BallArmDynamicEnv(gym.Env):
 
         return ns
 
-    def _render(self, mode='human', close=False):
-        if close:
-            if self.viewer is not None:
-                self.viewer.close()
-                self.viewer = None
-            return
-        from gym.envs.classic_control import rendering
-
+    def render(self, mode='human'):
         s = self.state
 
         if self.viewer is None:
@@ -251,3 +245,6 @@ class BallArmDynamicEnv(gym.Env):
         circ.add_attr(rendering.Transform(rotation=0.0, translation=(s[4], s[5])))
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
+
+    def close(self):
+        if self.viewer: self.viewer.close()

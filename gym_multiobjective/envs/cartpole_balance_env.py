@@ -8,6 +8,7 @@ In part, Modified from OpenAI gym
 import gym
 from gym import spaces
 from gym.utils import seeding
+from gym.envs.classic_control import rendering
 import numpy as np
 
 class CartPoleBalanceEnv(gym.Env):
@@ -43,19 +44,19 @@ class CartPoleBalanceEnv(gym.Env):
         self.TASK_NAME = ["height", "velocity", "energy"]
 
         # Initialize
-        self._seed()
+        self.seed()
         self.viewer = None
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _reset(self):
+    def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
         # self.state[1] += np.pi  # difference is here
         return self._get_obs()
 
-    def _step(self, action):
+    def step(self, action):
         s = self.state
         force = np.clip(action[0], -self.MAX_FORCE, self.MAX_FORCE)
 
@@ -63,7 +64,7 @@ class CartPoleBalanceEnv(gym.Env):
 
         ns[2] = np.clip(ns[2], -self.MAX_VEL_X, self.MAX_VEL_X)
         ns[3] = np.clip(ns[3], -self.MAX_VEL_ANG, self.MAX_VEL_ANG)
-        ns[1] = angle_normalize(ns[1])
+        ns[1] = self._angle_normalize(ns[1])
         collision = np.absolute(ns[0]) > self.MAX_X
         if collision:
             ns[0] = np.copysign(self.MAX_X, ns[0])
@@ -85,7 +86,7 @@ class CartPoleBalanceEnv(gym.Env):
             done = collision or np.absolute(ns[1]) > self.MAX_ANG
             reward = 0.0 if done else 1.0
 
-        return (self._get_obs(), reward, done, {})
+        return self._get_obs(), reward, done, {}
 
     def _get_obs(self):
         s = self.state
@@ -102,13 +103,10 @@ class CartPoleBalanceEnv(gym.Env):
 
         return s + np.array([dx, dtheta, ddx, ddtheta]) * dt
 
-    def _render(self, mode='human', close=False):
-        if close:
-            if self.viewer is not None:
-                self.viewer.close()
-                self.viewer = None
-            return
+    def _angle_normalize(self, x):
+        return (((x+np.pi) % (2*np.pi)) - np.pi)
 
+    def render(self, mode='human'):
         screen_width = 500
         screen_height = 500
 
@@ -121,7 +119,6 @@ class CartPoleBalanceEnv(gym.Env):
         cartheight = 30.0 * 0.5
 
         if self.viewer is None:
-            from gym.envs.classic_control import rendering
             self.viewer = rendering.Viewer(screen_width, screen_height)
             l,r,t,b = -cartwidth, cartwidth, cartheight, -cartheight
             axleoffset =cartheight * 0.5
@@ -152,5 +149,5 @@ class CartPoleBalanceEnv(gym.Env):
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
-def angle_normalize(x):
-    return (((x+np.pi) % (2*np.pi)) - np.pi)
+    def close(self):
+        if self.viewer: self.viewer.close()
